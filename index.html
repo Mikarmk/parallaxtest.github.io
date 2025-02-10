@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Адаптивный параллакс с кнопками</title>
+    <style>
+        /* Сброс отступов и установка box-sizing */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        /* Контейнер с соотношением сторон 16:9 */
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 1920px; /* Максимальная ширина, можно изменить по необходимости */
+            margin: 0 auto;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* Стили для параллакс-слоёв */
+        .parallax {
+            position: absolute;
+            width: 110%;  /* Немного больше, чтобы при смещении не появлялись пустые края */
+            height: 110%;
+            top: -5%;
+            left: -5%;
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.1s ease-out;
+        }
+        .layer1 { z-index: 1; }
+        .layer2 { z-index: 2; }
+        .layer3 { z-index: 3; }
+
+        /* Стили для навигационных кнопок */
+        .nav {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        .nav button {
+            padding: 10px 20px;
+            border: none;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .nav button:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /* Адаптивные стили для мобильных устройств */
+        @media (max-width: 768px) {
+            .nav {
+                top: 5px;
+                gap: 5px;
+            }
+            .nav button {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="parallax-container">
+    <!-- Навигационные кнопки -->
+    <div class="nav">
+        <button onclick="navigateTo('tab1')">Вкладка 1</button>
+        <button onclick="navigateTo('tab2')">Вкладка 2</button>
+        <button onclick="navigateTo('tab3')">Вкладка 3</button>
+    </div>
+
+    <!-- Параллакс-слои с изображениями -->
+    <div class="parallax layer1" style="background-image: url('image1.png');"></div>
+    <div class="parallax layer2" style="background-image: url('image2.png');"></div>
+    <div class="parallax layer3" style="background-image: url('image3.png');"></div>
+</div>
+
+<script>
+    const container = document.getElementById('parallax-container');
+    const layers = document.querySelectorAll('.parallax');
+
+    // Функция для расчёта смещения и применения трансформации к слоям
+    function applyParallax(clientX, clientY) {
+        const rect = container.getBoundingClientRect();
+        // Вычисляем позицию относительно контейнера
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        // Нормализуем координаты от -1 до 1 относительно центра контейнера
+        const offsetX = (x - rect.width / 2) / (rect.width / 2);
+        const offsetY = (y - rect.height / 2) / (rect.height / 2);
+
+        layers.forEach((layer, index) => {
+            // Чем дальше слой, тем сильнее смещение
+            const depth = (index + 1) / layers.length;
+            const moveX = offsetX * depth * 20;
+            const moveY = offsetY * depth * 20;
+            layer.style.transform = `translate(${moveX}px, ${moveY}px)`;
+        });
+    }
+
+    // Обработчик для mousemove (десктоп)
+    container.addEventListener('mousemove', (e) => {
+        applyParallax(e.clientX, e.clientY);
+    });
+
+    // Обработчик для touchmove (мобильные устройства)
+    container.addEventListener('touchmove', (e) => {
+        // Предотвращаем стандартное поведение (например, прокрутку)
+        e.preventDefault();
+        if (e.touches.length > 0) {
+            const touch = e.touches[0];
+            applyParallax(touch.clientX, touch.clientY);
+        }
+    }, { passive: false });
+
+    // Функция для сброса трансформаций
+    function resetParallax() {
+        layers.forEach(layer => {
+            layer.style.transform = 'translate(0, 0)';
+        });
+    }
+    // Сброс при уходе курсора или завершении касания
+    container.addEventListener('mouseleave', resetParallax);
+    container.addEventListener('touchend', resetParallax);
+
+    // Функция для обработки навигационных кнопок (пока просто выводит alert)
+    function navigateTo(tab) {
+        alert('Переход на ' + tab);
+    }
+</script>
+</body>
+</html>
